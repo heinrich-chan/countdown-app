@@ -1,559 +1,478 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en" class="h-full bg-slate-950">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dynamic Event Countdown</title>
-  <!-- Tailwind CSS CDN -->
+  <title>Event Countdown</title>
+
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Inter Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-            mono: ['JetBrains Mono', 'monospace'],
-          },
-        }
-      }
-    }
-  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
   <style>
     body {
-      background-color: #030712;
-      color: #f3f4f6;
       font-family: 'Inter', sans-serif;
     }
-    .glow-effect {
-      box-shadow: 0 0 50px -10px rgba(99, 102, 241, 0.25);
-    }
-    .glow-text {
-      text-shadow: 0 0 20px rgba(129, 140, 248, 0.5);
-    }
+    
     .glass-card {
-      background: rgba(17, 24, 39, 0.7);
+      background: rgba(15, 23, 42, 0.75);
       backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       border: 1px solid rgba(255, 255, 255, 0.08);
     }
+
+    .glass-input {
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .glass-input:focus {
+      border-color: #6366f1;
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25);
+    }
+
+    @keyframes pulse-subtle {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.02); opacity: 0.95; }
+    }
+
+    .animate-pulse-subtle {
+      animation: pulse-subtle 3s infinite ease-in-out;
+    }
+
     .digit-card {
-      background: rgba(31, 41, 55, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.05);
+      background: linear-gradient(180deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
+      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1), 0 10px 25px -5px rgba(0, 0, 0, 0.5);
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between items-center p-4 sm:p-6 overflow-x-hidden bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-950/40 via-slate-950 to-slate-950">
+<body class="h-full text-slate-100 flex flex-col justify-between overflow-x-hidden selection:bg-indigo-500 selection:text-white">
 
-  <!-- Toast Notification Container -->
-  <div id="toast" class="fixed top-5 right-5 z-50 transform translate-y-[-100px] opacity-0 transition-all duration-300 ease-out bg-indigo-600 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center space-x-2 border border-indigo-400/30">
-    <svg class="w-5 h-5 text-indigo-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-    </svg>
-    <span id="toast-message" class="font-medium text-sm">Link copied to clipboard!</span>
-  </div>
-
-  <!-- Header -->
-  <header class="w-full max-w-4xl py-4 flex justify-between items-center border-b border-slate-800/80 mb-6">
-    <div class="flex items-center space-x-3">
-      <div class="p-2 bg-indigo-600/20 rounded-lg border border-indigo-500/30">
-        <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+  <header class="w-full max-w-6xl mx-auto px-4 pt-6 flex justify-between items-center z-10">
+    <div class="flex items-center space-x-2">
+      <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-500 to-violet-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
         </svg>
       </div>
-      <span class="font-bold text-lg tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-200 via-white to-slate-400">
-        ChronoCount
-      </span>
+      <span class="font-bold tracking-tight text-lg bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-200 to-slate-400">TimePulse</span>
     </div>
-    <div id="status-badge" class="hidden items-center space-x-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded-full text-xs font-medium">
-      <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-      <span>Live Countdown</span>
+
+    <div class="flex items-center space-x-3">
+      <button id="copyShareBtn" class="flex items-center space-x-2 px-3.5 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 text-xs md:text-sm font-medium transition-all duration-200 active:scale-95 shadow-md">
+        <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+        </svg>
+        <span>Share Link</span>
+      </button>
+
+      <button id="toggleSettingsBtn" class="flex items-center space-x-2 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-xs md:text-sm font-semibold transition-all duration-200 active:scale-95 shadow-lg shadow-indigo-600/30">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+        </svg>
+        <span>Edit Event</span>
+      </button>
     </div>
   </header>
 
-  <!-- Main Container -->
-  <main class="w-full max-w-4xl my-auto flex flex-col items-center justify-center">
+  <main class="flex-grow flex flex-col items-center justify-center px-4 py-12 relative z-0">
+    <!-- Ambient Lighting FX -->
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none -z-10"></div>
+    <div class="absolute top-1/2 left-1/3 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-violet-600/15 rounded-full blur-3xl pointer-events-none -z-10"></div>
 
-    <!-- VIEW 1: Countdown Form Setup -->
-    <div id="form-view" class="w-full max-w-2xl glass-card rounded-2xl p-6 sm:p-8 shadow-2xl glow-effect transition-all duration-300">
-      <div class="mb-6">
-        <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Create Countdown</h1>
-        <p class="text-slate-400 text-sm mt-1">Set your target event details. The configuration will be stored inside the URL so you can easily share or bookmark it.</p>
+    <div class="w-full max-w-4xl text-center space-y-8">
+      
+      <!-- Event Heading -->
+      <div class="space-y-3">
+        <h1 id="displayTitle" class="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight text-white drop-shadow-sm">
+          Loading Countdown...
+        </h1>
+        <div class="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full glass-card text-xs md:text-sm text-slate-300 font-medium border border-slate-700/50">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+          <span id="targetFormattedDisplay">Target: Calculating...</span>
+        </div>
       </div>
 
-      <form id="countdown-form" onsubmit="handleFormSubmit(event)" class="space-y-6">
-        <!-- Title Field -->
-        <div>
-          <label for="input-title" class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">Event Title</label>
-          <input type="text" id="input-title" required placeholder="e.g. New Year 2028 / Product Launch" 
-            class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all">
+      <!-- Live Clock Grid -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 pt-4 max-w-3xl mx-auto">
+        
+        <!-- Days Card -->
+        <div class="digit-card rounded-2xl p-4 sm:p-6 border border-slate-700/60 flex flex-col items-center justify-center transition-all duration-300 hover:border-indigo-500/50">
+          <span id="daysVal" class="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight text-indigo-400 font-mono">00</span>
+          <span class="text-xs sm:text-sm uppercase tracking-widest text-slate-400 font-bold mt-2">Days</span>
         </div>
 
-        <!-- Date & Time Grid -->
+        <!-- Hours Card -->
+        <div class="digit-card rounded-2xl p-4 sm:p-6 border border-slate-700/60 flex flex-col items-center justify-center transition-all duration-300 hover:border-indigo-500/50">
+          <span id="hoursVal" class="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight text-indigo-400 font-mono">00</span>
+          <span class="text-xs sm:text-sm uppercase tracking-widest text-slate-400 font-bold mt-2">Hours</span>
+        </div>
+
+        <!-- Minutes Card -->
+        <div class="digit-card rounded-2xl p-4 sm:p-6 border border-slate-700/60 flex flex-col items-center justify-center transition-all duration-300 hover:border-indigo-500/50">
+          <span id="minutesVal" class="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight text-indigo-400 font-mono">00</span>
+          <span class="text-xs sm:text-sm uppercase tracking-widest text-slate-400 font-bold mt-2">Minutes</span>
+        </div>
+
+        <!-- Seconds Card -->
+        <div class="digit-card rounded-2xl p-4 sm:p-6 border border-slate-700/60 flex flex-col items-center justify-center transition-all duration-300 hover:border-indigo-500/50">
+          <span id="secondsVal" class="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight text-rose-400 font-mono">00</span>
+          <span class="text-xs sm:text-sm uppercase tracking-widest text-slate-400 font-bold mt-2">Seconds</span>
+        </div>
+
+      </div>
+
+      <!-- Status Subtext -->
+      <div id="statusMessage" class="text-sm md:text-base font-medium text-slate-400 pt-2 min-h-[1.5rem]">
+        <!-- Dynamic countdown status message -->
+      </div>
+
+    </div>
+  </main>
+
+  <div id="settingsDrawer" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden transition-opacity duration-300 flex items-center justify-center p-4">
+    <div class="glass-card w-full max-w-lg rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-700/80 max-h-[90vh] overflow-y-auto">
+      
+      <div class="flex justify-between items-center mb-6">
         <div>
-          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">Target Date & Time</label>
-          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <h2 class="text-xl font-bold text-white">Configure Countdown</h2>
+          <p class="text-xs text-slate-400">Set the target date, time, and UTC offset</p>
+        </div>
+        <button id="closeSettingsBtn" class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <form id="configForm" class="space-y-4">
+        
+        <!-- Event Title -->
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Event Title</label>
+          <input type="text" id="inputTitle" placeholder="e.g. New Year Celebration" class="w-full glass-input text-white rounded-xl px-4 py-2.5 text-sm transition" required>
+        </div>
+
+        <!-- Date Inputs -->
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Target Date</label>
+          <div class="grid grid-cols-3 gap-2">
             <div>
-              <span class="block text-[11px] text-slate-400 mb-1">Year</span>
-              <input type="number" id="input-year" required min="1970" max="2100" placeholder="YYYY" 
-                class="w-full bg-slate-900/90 border border-slate-700/80 rounded-lg px-3 py-2 text-white text-center font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+              <span class="text-[10px] text-slate-400 block mb-0.5">Year</span>
+              <input type="number" id="inputYear" min="2000" max="2100" class="w-full glass-input text-white rounded-xl px-3 py-2 text-sm text-center font-mono" required>
             </div>
             <div>
-              <span class="block text-[11px] text-slate-400 mb-1">Month (1-12)</span>
-              <input type="number" id="input-month" required min="1" max="12" placeholder="MM" 
-                class="w-full bg-slate-900/90 border border-slate-700/80 rounded-lg px-3 py-2 text-white text-center font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+              <span class="text-[10px] text-slate-400 block mb-0.5">Month</span>
+              <input type="number" id="inputMonth" min="1" max="12" class="w-full glass-input text-white rounded-xl px-3 py-2 text-sm text-center font-mono" required>
             </div>
             <div>
-              <span class="block text-[11px] text-slate-400 mb-1">Day (1-31)</span>
-              <input type="number" id="input-day" required min="1" max="31" placeholder="DD" 
-                class="w-full bg-slate-900/90 border border-slate-700/80 rounded-lg px-3 py-2 text-white text-center font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+              <span class="text-[10px] text-slate-400 block mb-0.5">Day</span>
+              <input type="number" id="inputDay" min="1" max="31" class="w-full glass-input text-white rounded-xl px-3 py-2 text-sm text-center font-mono" required>
+            </div>
+          </div>
+        </div>
+
+        <!-- Time Inputs -->
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Target Time (24h)</label>
+          <div class="grid grid-cols-3 gap-2">
+            <div>
+              <span class="text-[10px] text-slate-400 block mb-0.5">Hour</span>
+              <input type="number" id="inputHour" min="0" max="23" class="w-full glass-input text-white rounded-xl px-3 py-2 text-sm text-center font-mono" required>
             </div>
             <div>
-              <span class="block text-[11px] text-slate-400 mb-1">Hour (0-23)</span>
-              <input type="number" id="input-hour" required min="0" max="23" placeholder="HH" 
-                class="w-full bg-slate-900/90 border border-slate-700/80 rounded-lg px-3 py-2 text-white text-center font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+              <span class="text-[10px] text-slate-400 block mb-0.5">Minute</span>
+              <input type="number" id="inputMinute" min="0" max="59" class="w-full glass-input text-white rounded-xl px-3 py-2 text-sm text-center font-mono" required>
             </div>
             <div>
-              <span class="block text-[11px] text-slate-400 mb-1">Minute (0-59)</span>
-              <input type="number" id="input-minute" required min="0" max="59" placeholder="mm" 
-                class="w-full bg-slate-900/90 border border-slate-700/80 rounded-lg px-3 py-2 text-white text-center font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-            </div>
-            <div>
-              <span class="block text-[11px] text-slate-400 mb-1">Second (0-59)</span>
-              <input type="number" id="input-second" required min="0" max="59" placeholder="ss" 
-                class="w-full bg-slate-900/90 border border-slate-700/80 rounded-lg px-3 py-2 text-white text-center font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+              <span class="text-[10px] text-slate-400 block mb-0.5">Second</span>
+              <input type="number" id="inputSecond" min="0" max="59" class="w-full glass-input text-white rounded-xl px-3 py-2 text-sm text-center font-mono" required>
             </div>
           </div>
         </div>
 
         <!-- UTC Offset Selection -->
         <div>
-          <label for="input-utc" class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">UTC Offset (Hours)</label>
-          <div class="flex items-center space-x-3">
-            <input type="number" id="input-utc" step="0.5" min="-12" max="14" required placeholder="e.g. +8, -5, 0" 
-              class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-3 text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-            <button type="button" onclick="setLocalUtcOffset()" class="whitespace-nowrap px-3 py-3 bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 rounded-xl border border-slate-700 transition-colors">
-              Use My Offset
-            </button>
-          </div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Timezone (UTC Offset)</label>
+          <select id="inputUtc" class="w-full glass-input text-white rounded-xl px-3 py-2.5 text-sm bg-slate-900 cursor-pointer">
+            <option value="-12:00">UTC -12:00 (Anywhere on Earth)</option>
+            <option value="-11:00">UTC -11:00 (Samoa, Niue)</option>
+            <option value="-10:00">UTC -10:00 (Hawaii)</option>
+            <option value="-09:00">UTC -09:00 (Alaska)</option>
+            <option value="-08:00">UTC -08:00 (Pacific Time - US/Canada)</option>
+            <option value="-07:00">UTC -07:00 (Mountain Time - US/Canada)</option>
+            <option value="-06:00">UTC -06:00 (Central Time - US/Canada)</option>
+            <option value="-05:00">UTC -05:00 (Eastern Time - US/Canada)</option>
+            <option value="-04:00">UTC -04:00 (Atlantic Time)</option>
+            <option value="-03:00">UTC -03:00 (Argentina, Brazil East)</option>
+            <option value="-02:00">UTC -02:00 (Mid-Atlantic)</option>
+            <option value="-01:00">UTC -01:00 (Azores, Cape Verde)</option>
+            <option value="+00:00" selected>UTC +00:00 (GMT / London)</option>
+            <option value="+01:00">UTC +01:00 (Central European Time)</option>
+            <option value="+02:00">UTC +02:00 (Eastern European Time)</option>
+            <option value="+03:00">UTC +03:00 (Moscow, East Africa)</option>
+            <option value="+04:00">UTC +04:00 (Gulf Standard Time, Dubai)</option>
+            <option value="+05:00">UTC +05:00 (Pakistan)</option>
+            <option value="+05:30">UTC +05:30 (India Standard Time)</option>
+            <option value="+06:00">UTC +06:00 (Bangladesh)</option>
+            <option value="+07:00">UTC +07:00 (Indochina Time, Bangkok)</option>
+            <option value="+08:00">UTC +08:00 (China, Hong Kong, Singapore)</option>
+            <option value="+09:00">UTC +09:00 (Japan Standard Time, Seoul)</option>
+            <option value="+09:30">UTC +09:30 (Australian Central Time)</option>
+            <option value="+10:00">UTC +10:00 (Australian Eastern Time)</option>
+            <option value="+12:00">UTC +12:00 (New Zealand)</option>
+            <option value="+13:00">UTC +13:00 (Tonga, Kiribati)</option>
+          </select>
         </div>
 
-        <!-- Preset Quick Action Buttons -->
-        <div>
-          <span class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Quick Presets</span>
-          <div class="flex flex-wrap gap-2">
-            <button type="button" onclick="applyPreset('1h')" class="px-3 py-1.5 bg-slate-800/80 hover:bg-slate-700 text-xs text-slate-300 rounded-lg border border-slate-700/60 transition-all">+1 Hour</button>
-            <button type="button" onclick="applyPreset('1d')" class="px-3 py-1.5 bg-slate-800/80 hover:bg-slate-700 text-xs text-slate-300 rounded-lg border border-slate-700/60 transition-all">+1 Day</button>
-            <button type="button" onclick="applyPreset('1m')" class="px-3 py-1.5 bg-slate-800/80 hover:bg-slate-700 text-xs text-slate-300 rounded-lg border border-slate-700/60 transition-all">+1 Month</button>
-            <button type="button" onclick="applyPreset('1y')" class="px-3 py-1.5 bg-slate-800/80 hover:bg-slate-700 text-xs text-slate-300 rounded-lg border border-slate-700/60 transition-all">+1 Year</button>
-          </div>
+        <!-- Action Buttons -->
+        <div class="pt-4 flex items-center space-x-3">
+          <button type="submit" class="flex-1 py-3 px-4 bg-indigo-600 hover:bg-indigo-500 font-bold text-sm text-white rounded-xl shadow-lg shadow-indigo-600/30 transition active:scale-95">
+            Apply & Save URL
+          </button>
+          <button type="button" id="resetDefaultsBtn" class="py-3 px-4 bg-slate-800 hover:bg-slate-700 font-semibold text-sm text-slate-300 rounded-xl border border-slate-700 transition">
+            Preset (+7d)
+          </button>
         </div>
 
-        <!-- Submit Button -->
-        <button type="submit" class="w-full py-4 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/30 transform hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center space-x-2">
-          <span>Start Countdown & Generate Link</span>
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
-          </svg>
-        </button>
       </form>
     </div>
+  </div>
 
-    <!-- VIEW 2: Countdown Display -->
-    <div id="countdown-view" class="hidden w-full flex flex-col items-center text-center space-y-8 animate-fade-in">
-      
-      <!-- Event Title Display -->
-      <div class="space-y-2 max-w-3xl">
-        <h1 id="display-title" class="text-3xl sm:text-5xl md:text-6xl font-black text-white tracking-tight leading-tight glow-text break-words">
-          Event Countdown
-        </h1>
-        <p id="display-target-info" class="text-xs sm:text-sm text-indigo-300/80 font-mono tracking-wide">
-          Target: --
-        </p>
-      </div>
-
-      <!-- Main Duration String Box (YYYY-MM-DD hh:mm:ss Format) -->
-      <div class="w-full max-w-3xl glass-card rounded-3xl p-6 sm:p-10 shadow-2xl glow-effect border border-indigo-500/20">
-        <div class="text-xs uppercase tracking-widest text-slate-400 font-semibold mb-3">Remaining Time (YYYY-MM-DD hh:mm:ss)</div>
-        
-        <div id="formatted-string-display" class="font-mono text-3xl sm:text-5xl md:text-6xl font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 via-white to-indigo-300 py-2">
-          0000-00-00 00:00:00
-        </div>
-
-        <!-- Detailed Segmented Display Breakdown -->
-        <div class="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-4 mt-8">
-          <div class="digit-card p-3 sm:p-4 rounded-2xl flex flex-col items-center">
-            <span id="unit-years" class="font-mono text-xl sm:text-3xl font-extrabold text-white">0000</span>
-            <span class="text-[10px] sm:text-xs text-slate-400 uppercase font-medium mt-1">Years</span>
-          </div>
-          <div class="digit-card p-3 sm:p-4 rounded-2xl flex flex-col items-center">
-            <span id="unit-months" class="font-mono text-xl sm:text-3xl font-extrabold text-white">00</span>
-            <span class="text-[10px] sm:text-xs text-slate-400 uppercase font-medium mt-1">Months</span>
-          </div>
-          <div class="digit-card p-3 sm:p-4 rounded-2xl flex flex-col items-center">
-            <span id="unit-days" class="font-mono text-xl sm:text-3xl font-extrabold text-white">00</span>
-            <span class="text-[10px] sm:text-xs text-slate-400 uppercase font-medium mt-1">Days</span>
-          </div>
-          <div class="digit-card p-3 sm:p-4 rounded-2xl flex flex-col items-center">
-            <span id="unit-hours" class="font-mono text-xl sm:text-3xl font-extrabold text-white">00</span>
-            <span class="text-[10px] sm:text-xs text-slate-400 uppercase font-medium mt-1">Hours</span>
-          </div>
-          <div class="digit-card p-3 sm:p-4 rounded-2xl flex flex-col items-center">
-            <span id="unit-minutes" class="font-mono text-xl sm:text-3xl font-extrabold text-white">00</span>
-            <span class="text-[10px] sm:text-xs text-slate-400 uppercase font-medium mt-1">Minutes</span>
-          </div>
-          <div class="digit-card p-3 sm:p-4 rounded-2xl flex flex-col items-center">
-            <span id="unit-seconds" class="font-mono text-xl sm:text-3xl font-extrabold text-white">00</span>
-            <span class="text-[10px] sm:text-xs text-slate-400 uppercase font-medium mt-1">Seconds</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Action Buttons -->
-      <div class="flex flex-wrap items-center justify-center gap-4 pt-2">
-        <button onclick="copyShareableLink()" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl shadow-lg shadow-indigo-600/30 transition-all flex items-center space-x-2">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
-          </svg>
-          <span>Copy Shareable Link</span>
-        </button>
-
-        <button onclick="switchToEditMode()" class="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl border border-slate-700 transition-all flex items-center space-x-2">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-          </svg>
-          <span>Edit Countdown Settings</span>
-        </button>
-      </div>
-
+  <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 ease-out pointer-events-none">
+    <div class="glass-card border border-emerald-500/40 bg-slate-900/90 text-emerald-300 px-5 py-3 rounded-2xl shadow-xl flex items-center space-x-3">
+      <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+      </svg>
+      <span id="toastMsg" class="text-sm font-semibold">Share link copied to clipboard!</span>
     </div>
+  </div>
 
-  </main>
-
-  <!-- Footer -->
-  <footer class="w-full max-w-4xl py-6 text-center text-xs text-slate-500 border-t border-slate-800/60 mt-8">
-    Static & serverless single-page app designed for GitHub Pages.
+  <footer class="w-full max-w-6xl mx-auto px-4 py-6 text-center text-xs text-slate-500 z-10">
+    <p>Powered by TimePulse • Bookmark or share the generated URL anytime</p>
   </footer>
 
-  <!-- JavaScript Application Logic -->
   <script>
     let countdownInterval = null;
-    let targetDateUtc = null;
+    let targetTimestamp = null;
 
-    // Execute script on initial page load
-    window.addEventListener('DOMContentLoaded', () => {
-      initApp();
-    });
-
-    /**
-     * Initializes the app state based on URL search query parameters
-     */
-    function initApp() {
-      const params = new URLSearchParams(window.location.search);
-      
-      const title = params.get('title');
-      const year = params.get('year');
-      const month = params.get('month');
-      const day = params.get('day');
-      const hour = params.get('hour');
-      const minute = params.get('minute');
-      const second = params.get('second');
-      const utc = params.get('utc');
-
-      // Check if all necessary query parameters exist
-      if (title && year && month && day && hour !== null && minute !== null && second !== null && utc !== null) {
-        startCountdownDisplay({
-          title,
-          year: parseInt(year),
-          month: parseInt(month),
-          day: parseInt(day),
-          hour: parseInt(hour),
-          minute: parseInt(minute),
-          second: parseInt(second),
-          utc: parseFloat(utc)
-        });
-      } else {
-        // Missing parameters: Show setup form with default pre-filled values
-        populateDefaults();
-        showFormView();
-      }
+    // Helper to pad single digits with leading zero
+    function padZero(num) {
+      return String(num).padStart(2, '0');
     }
 
-    /**
-     * Pre-fills the form with sensible default values (Current time + 1 year, local UTC offset)
-     */
-    function populateDefaults() {
-      const now = new Date();
-      
-      document.getElementById('input-title').value = "My Special Event";
-      document.getElementById('input-year').value = now.getFullYear() + 1;
-      document.getElementById('input-month').value = now.getMonth() + 1;
-      document.getElementById('input-day').value = now.getDate();
-      document.getElementById('input-hour').value = now.getHours();
-      document.getElementById('input-minute').value = now.getMinutes();
-      document.getElementById('input-second').value = 0;
+    // Helper to format months by name
+    const monthNames = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
 
-      setLocalUtcOffset();
-    }
-
-    /**
-     * Helper to compute and set current browser UTC offset in hours
-     */
-    function setLocalUtcOffset() {
-      const offsetMinutes = new Date().getTimezoneOffset();
-      const offsetHours = -offsetMinutes / 60;
-      document.getElementById('input-utc').value = offsetHours >= 0 ? `+${offsetHours}` : offsetHours;
-    }
-
-    /**
-     * Quick preset buttons helper
-     */
-    function applyPreset(type) {
-      const now = new Date();
-      let target = new Date(now);
-
-      if (type === '1h') target.setHours(target.getHours() + 1);
-      else if (type === '1d') target.setDate(target.getDate() + 1);
-      else if (type === '1m') target.setMonth(target.getMonth() + 1);
-      else if (type === '1y') target.setFullYear(target.getFullYear() + 1);
-
-      document.getElementById('input-year').value = target.getFullYear();
-      document.getElementById('input-month').value = target.getMonth() + 1;
-      document.getElementById('input-day').value = target.getDate();
-      document.getElementById('input-hour').value = target.getHours();
-      document.getElementById('input-minute').value = target.getMinutes();
-      document.getElementById('input-second').value = target.getSeconds();
-      setLocalUtcOffset();
-    }
-
-    /**
-     * Handles Form Submission: builds query parameters and triggers timer view
-     */
-    function handleFormSubmit(e) {
-      e.preventDefault();
-
-      const paramsData = {
-        title: document.getElementById('input-title').value.trim(),
-        year: parseInt(document.getElementById('input-year').value),
-        month: parseInt(document.getElementById('input-month').value),
-        day: parseInt(document.getElementById('input-day').value),
-        hour: parseInt(document.getElementById('input-hour').value),
-        minute: parseInt(document.getElementById('input-minute').value),
-        second: parseInt(document.getElementById('input-second').value),
-        utc: parseFloat(document.getElementById('input-utc').value)
-      };
-
-      // Construct search parameters
-      const params = new URLSearchParams();
-      Object.keys(paramsData).forEach(key => params.set(key, paramsData[key]));
-
-      // Update URL query params without refreshing page
-      const newUrl = window.location.pathname + '?' + params.toString();
-      window.history.pushState({ path: newUrl }, '', newUrl);
-
-      startCountdownDisplay(paramsData);
-    }
-
-    /**
-     * Starts and updates the Countdown view
-     */
-    function startCountdownDisplay(config) {
-      // Clear any existing active interval
-      if (countdownInterval) clearInterval(countdownInterval);
-
-      // Create UTC Date target object
-      // Month in JS Date is 0-indexed (0 = Jan, 11 = Dec)
-      // Subtract target UTC offset to normalize date into standard UTC time
-      const utcOffsetMs = config.utc * 3600 * 1000;
-      const targetUtcTimestamp = Date.UTC(config.year, config.month - 1, config.day, config.hour, config.minute, config.second) - utcOffsetMs;
-      targetDateUtc = new Date(targetUtcTimestamp);
-
-      // Set UI Title & Target Info
-      document.getElementById('display-title').textContent = config.title;
-      
-      const formattedUtcOffset = config.utc >= 0 ? `+${config.utc}` : `${config.utc}`;
-      const paddedMonth = String(config.month).padStart(2, '0');
-      const paddedDay = String(config.day).padStart(2, '0');
-      const paddedHour = String(config.hour).padStart(2, '0');
-      const paddedMinute = String(config.minute).padStart(2, '0');
-      const paddedSecond = String(config.second).padStart(2, '0');
-
-      document.getElementById('display-target-info').textContent = 
-        `Target Date: ${config.year}-${paddedMonth}-${paddedDay} ${paddedHour}:${paddedMinute}:${paddedSecond} (UTC${formattedUtcOffset})`;
-
-      // Switch views
-      showCountdownView();
-
-      // Tick immediately then set interval
-      updateTimer();
-      countdownInterval = setInterval(updateTimer, 1000);
-    }
-
-    /**
-     * Calculates precise calendar duration difference (YYYY-MM-DD hh:mm:ss)
-     */
-    function updateTimer() {
-      const now = new Date();
-      const nowUtcMs = now.getTime();
-      const diffMs = targetDateUtc.getTime() - nowUtcMs;
-
-      if (diffMs <= 0) {
-        // Countdown Expired
-        document.getElementById('formatted-string-display').textContent = "0000-00-00 00:00:00";
-        document.getElementById('unit-years').textContent = "0000";
-        document.getElementById('unit-months').textContent = "00";
-        document.getElementById('unit-days').textContent = "00";
-        document.getElementById('unit-hours').textContent = "00";
-        document.getElementById('unit-minutes').textContent = "00";
-        document.getElementById('unit-seconds').textContent = "00";
-        
-        const badge = document.getElementById('status-badge');
-        badge.className = "flex items-center space-x-2 bg-amber-500/10 text-amber-400 border border-amber-500/20 px-3 py-1 rounded-full text-xs font-medium";
-        badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400"></span><span>Event Ended</span>`;
-        
-        clearInterval(countdownInterval);
-        return;
-      }
-
-      // Compute exact remaining duration fields using calendar stepping logic
-      const remaining = calculateExactDifference(now, targetDateUtc);
-
-      // Render YYYY-MM-DD hh:mm:ss string
-      const formattedStr = `${remaining.years} 年\n${remaining.months} 個月\n ${remaining.days} 日\n ${remaining.hours} 個鐘\n ${remaining.minutes} 分鐘\n ${remaining.seconds} 秒`;
-      document.getElementById('formatted-string-display').textContent = formattedStr;
-
-      // Render unit boxes
-      document.getElementById('unit-years').textContent = remaining.years;
-      document.getElementById('unit-months').textContent = remaining.months;
-      document.getElementById('unit-days').textContent = remaining.days;
-      document.getElementById('unit-hours').textContent = remaining.hours;
-      document.getElementById('unit-minutes').textContent = remaining.minutes;
-      document.getElementById('unit-seconds').textContent = remaining.seconds;
-    }
-
-    /**
-     * Calendar step algorithm to compute true remaining Years, Months, Days, Hours, Mins, Secs
-     */
-    function calculateExactDifference(startDate, endDate) {
-      let y1 = startDate.getUTCFullYear(), m1 = startDate.getUTCMonth(), d1 = startDate.getUTCDate();
-      let h1 = startDate.getUTCHours(), min1 = startDate.getUTCMinutes(), s1 = startDate.getUTCSeconds();
-
-      let y2 = endDate.getUTCFullYear(), m2 = endDate.getUTCMonth(), d2 = endDate.getUTCDate();
-      let h2 = endDate.getUTCHours(), min2 = endDate.getUTCMinutes(), s2 = endDate.getUTCSeconds();
-
-      let diffYears = y2 - y1;
-      let diffMonths = m2 - m1;
-      let diffDays = d2 - d1;
-      let diffHours = h2 - h1;
-      let diffMinutes = min2 - min1;
-      let diffSeconds = s2 - s1;
-
-      if (diffSeconds < 0) {
-        diffSeconds += 60;
-        diffMinutes--;
-      }
-      if (diffMinutes < 0) {
-        diffMinutes += 60;
-        diffHours--;
-      }
-      if (diffHours < 0) {
-        diffHours += 24;
-        diffDays--;
-      }
-      if (diffDays < 0) {
-        // Get total days in the month prior to end date
-        const prevMonthDate = new Date(Date.UTC(y2, m2, 0));
-        diffDays += prevMonthDate.getUTCDate();
-        diffMonths--;
-      }
-      if (diffMonths < 0) {
-        diffMonths += 12;
-        diffYears--;
-      }
-
-      return {
-        years: String(diffYears).padStart(4, '0'),
-        months: String(diffMonths).padStart(2, '0'),
-        days: String(diffDays).padStart(2, '0'),
-        hours: String(diffHours).padStart(2, '0'),
-        minutes: String(diffMinutes).padStart(2, '0'),
-        seconds: String(diffSeconds).padStart(2, '0')
-      };
-    }
-
-    /**
-     * Switch view visibility to Edit Form
-     */
-    function switchToEditMode() {
-      if (countdownInterval) clearInterval(countdownInterval);
-      
-      const params = new URLSearchParams(window.location.search);
-      if (params.has('title')) document.getElementById('input-title').value = params.get('title');
-      if (params.has('year')) document.getElementById('input-year').value = params.get('year');
-      if (params.has('month')) document.getElementById('input-month').value = params.get('month');
-      if (params.has('day')) document.getElementById('input-day').value = params.get('day');
-      if (params.has('hour')) document.getElementById('input-hour').value = params.get('hour');
-      if (params.has('minute')) document.getElementById('input-minute').value = params.get('minute');
-      if (params.has('second')) document.getElementById('input-second').value = params.get('second');
-      if (params.has('utc')) document.getElementById('input-utc').value = params.get('utc');
-
-      showFormView();
-    }
-
-    function showFormView() {
-      document.getElementById('form-view').classList.remove('hidden');
-      document.getElementById('countdown-view').classList.add('hidden');
-      document.getElementById('status-badge').classList.add('hidden');
-      document.getElementById('status-badge').classList.remove('flex');
-    }
-
-    function showCountdownView() {
-      document.getElementById('form-view').classList.add('hidden');
-      document.getElementById('countdown-view').classList.remove('hidden');
-      document.getElementById('status-badge').classList.remove('hidden');
-      document.getElementById('status-badge').classList.add('flex');
-    }
-
-    /**
-     * Copy shareable URL using execCommand for sandbox/iframe compatibility
-     */
-    function copyShareableLink() {
-      const currentUrl = window.location.href;
-      
-      const tempInput = document.createElement('input');
-      tempInput.value = currentUrl;
-      document.body.appendChild(tempInput);
-      tempInput.select();
-      
-      try {
-        document.execCommand('copy');
-        showToast("Shareable countdown link copied to clipboard!");
-      } catch (err) {
-        showToast("Failed to copy link. Please copy URL manually.");
-      }
-      
-      document.body.removeChild(tempInput);
-    }
-
-    /**
-     * Display toast feedback notification
-     */
     function showToast(message) {
       const toast = document.getElementById('toast');
-      const toastMsg = document.getElementById('toast-message');
+      const toastMsg = document.getElementById('toastMsg');
       toastMsg.textContent = message;
-
-      toast.classList.remove('translate-y-[-100px]', 'opacity-0');
+      
+      toast.classList.remove('translate-y-20', 'opacity-0');
       toast.classList.add('translate-y-0', 'opacity-100');
 
       setTimeout(() => {
         toast.classList.remove('translate-y-0', 'opacity-100');
-        toast.classList.add('translate-y-[-100px]', 'opacity-0');
+        toast.classList.add('translate-y-20', 'opacity-0');
       }, 3000);
     }
+
+    function getParamsFromURL() {
+      const params = new URLSearchParams(window.location.search);
+      const now = new Date();
+      
+      // Default target: 7 days from right now
+      const defaultTarget = new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000));
+
+      return {
+        title: params.get('title') || 'Upcoming Event',
+        year: parseInt(params.get('year')) || defaultTarget.getFullYear(),
+        month: parseInt(params.get('month')) || (defaultTarget.getMonth() + 1),
+        day: parseInt(params.get('day')) || defaultTarget.getDate(),
+        hour: parseInt(params.get('hour')) !== null && !isNaN(parseInt(params.get('hour'))) ? parseInt(params.get('hour')) : 12,
+        minute: parseInt(params.get('minute')) !== null && !isNaN(parseInt(params.get('minute'))) ? parseInt(params.get('minute')) : 0,
+        second: parseInt(params.get('second')) !== null && !isNaN(parseInt(params.get('second'))) ? parseInt(params.get('second')) : 0,
+        utc: params.get('utc') || '+00:00'
+      };
+    }
+
+    function parseTargetDate(config) {
+      const yearStr = config.year;
+      const monthStr = padZero(config.month);
+      const dayStr = padZero(config.day);
+      const hourStr = padZero(config.hour);
+      const minStr = padZero(config.minute);
+      const secStr = padZero(config.second);
+      const utcOffset = config.utc.includes(':') ? config.utc : '+00:00';
+
+      const isoFormatted = `${yearStr}-${monthStr}-${dayStr}T${hourStr}:${minStr}:${secStr}${utcOffset}`;
+      const dateObj = new Date(isoFormatted);
+
+      if (isNaN(dateObj.getTime())) {
+        // Fallback if user enters invalid date (e.g. Feb 31)
+        return new Date();
+      }
+      return dateObj;
+    }
+
+    function populateFormInputs(config) {
+      document.getElementById('inputTitle').value = config.title;
+      document.getElementById('inputYear').value = config.year;
+      document.getElementById('inputMonth').value = config.month;
+      document.getElementById('inputDay').value = config.day;
+      document.getElementById('inputHour').value = config.hour;
+      document.getElementById('inputMinute').value = config.minute;
+      document.getElementById('inputSecond').value = config.second;
+      
+      const utcSelect = document.getElementById('inputUtc');
+      if (Array.from(utcSelect.options).some(opt => opt.value === config.utc)) {
+        utcSelect.value = config.utc;
+      } else {
+        utcSelect.value = '+00:00';
+      }
+    }
+
+    function startCountdownTimer(config) {
+      if (countdownInterval) clearInterval(countdownInterval);
+
+      const targetDate = parseTargetDate(config);
+      targetTimestamp = targetDate.getTime();
+
+      // Render Title & Human-readable Target display
+      document.getElementById('displayTitle').textContent = config.title;
+      
+      const readableMonth = monthNames[config.month - 1] || "Month";
+      const readableTime = `${padZero(config.hour)}:${padZero(config.minute)}:${padZero(config.second)}`;
+      document.getElementById('targetFormattedDisplay').textContent = 
+        `Target: ${readableMonth} ${config.day}, ${config.year} at ${readableTime} (UTC ${config.utc})`;
+
+      function tick() {
+        const now = Date.now();
+        const diff = targetTimestamp - now;
+
+        if (diff <= 0) {
+          // Timer finished
+          document.getElementById('daysVal').textContent = '00';
+          document.getElementById('hoursVal').textContent = '00';
+          document.getElementById('minutesVal').textContent = '00';
+          document.getElementById('secondsVal').textContent = '00';
+          document.getElementById('statusMessage').innerHTML = '<span class="text-emerald-400 font-bold text-lg animate-bounce inline-block">🎉 The event has arrived!</span>';
+          return;
+        }
+
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+        document.getElementById('daysVal').textContent = padZero(days);
+        document.getElementById('hoursVal').textContent = padZero(hours);
+        document.getElementById('minutesVal').textContent = padZero(minutes);
+        document.getElementById('secondsVal').textContent = padZero(seconds);
+
+        document.getElementById('statusMessage').textContent = 'Countdown actively ticking...';
+      }
+
+      tick();
+      countdownInterval = setInterval(tick, 1000);
+    }
+
+    function updateURLAndConfig(config) {
+      const searchParams = new URLSearchParams();
+      searchParams.set('title', config.title);
+      searchParams.set('year', config.year);
+      searchParams.set('month', config.month);
+      searchParams.set('day', config.day);
+      searchParams.set('hour', config.hour);
+      searchParams.set('minute', config.minute);
+      searchParams.set('second', config.second);
+      searchParams.set('utc', config.utc);
+
+      const newRelativePathQuery = window.location.pathname + '?' + searchParams.toString();
+      window.history.pushState(null, '', newRelativePathQuery);
+
+      startCountdownTimer(config);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const config = getParamsFromURL();
+      populateFormInputs(config);
+      startCountdownTimer(config);
+
+      // Drawer toggle
+      const settingsDrawer = document.getElementById('settingsDrawer');
+      const toggleBtn = document.getElementById('toggleSettingsBtn');
+      const closeBtn = document.getElementById('closeSettingsBtn');
+
+      toggleBtn.addEventListener('click', () => {
+        settingsDrawer.classList.remove('hidden');
+      });
+
+      closeBtn.addEventListener('click', () => {
+        settingsDrawer.classList.add('hidden');
+      });
+
+      settingsDrawer.addEventListener('click', (e) => {
+        if (e.target === settingsDrawer) {
+          settingsDrawer.classList.add('hidden');
+        }
+      });
+
+      // Form submission
+      document.getElementById('configForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const updatedConfig = {
+          title: document.getElementById('inputTitle').value.trim() || 'Countdown Event',
+          year: parseInt(document.getElementById('inputYear').value) || 2026,
+          month: parseInt(document.getElementById('inputMonth').value) || 1,
+          day: parseInt(document.getElementById('inputDay').value) || 1,
+          hour: parseInt(document.getElementById('inputHour').value) || 0,
+          minute: parseInt(document.getElementById('inputMinute').value) || 0,
+          second: parseInt(document.getElementById('inputSecond').value) || 0,
+          utc: document.getElementById('inputUtc').value
+        };
+
+        updateURLAndConfig(updatedConfig);
+        settingsDrawer.classList.add('hidden');
+        showToast('Countdown updated & URL saved!');
+      });
+
+      // Preset button (+7 days)
+      document.getElementById('resetDefaultsBtn').addEventListener('click', () => {
+        const future = new Date(Date.now() + (7 * 24 * 60 * 60 * 1000));
+        document.getElementById('inputYear').value = future.getFullYear();
+        document.getElementById('inputMonth').value = future.getMonth() + 1;
+        document.getElementById('inputDay').value = future.getDate();
+        document.getElementById('inputHour').value = 12;
+        document.getElementById('inputMinute').value = 0;
+        document.getElementById('inputSecond').value = 0;
+        document.getElementById('inputUtc').value = '+00:00';
+      });
+
+      // Copy Shareable Link helper
+      document.getElementById('copyShareBtn').addEventListener('click', () => {
+        const shareUrl = window.location.href;
+        
+        // Use standard execCommand fallback for seamless clipboard copy
+        const tempInput = document.createElement('input');
+        tempInput.value = shareUrl;
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        try {
+          document.execCommand('copy');
+          showToast('Share link copied to clipboard!');
+        } catch (err) {
+          showToast('Failed to copy link. Please copy browser URL directly.');
+        }
+        document.body.removeChild(tempInput);
+      });
+    });
   </script>
 </body>
 </html>
