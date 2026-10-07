@@ -422,7 +422,7 @@
       const remaining = calculateExactDifference(now, targetDateUtc);
 
       // Render YYYY-MM-DD hh:mm:ss string
-      const formattedStr = `${remaining.years}-${remaining.months}-${remaining.days} ${remaining.hours}:${remaining.minutes}:${remaining.seconds}`;
+      const formattedStr = `${remaining.years} Years ${remaining.months} Months ${remaining.days} Days ${remaining.hours} Hours ${remaining.minutes} Minutes ${remaining.seconds} Seconds`;
       document.getElementById('formatted-string-display').textContent = formattedStr;
 
       // Render unit boxes
